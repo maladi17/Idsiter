@@ -14,8 +14,8 @@ strform=""
 ###############################################################################################
 
 #how to get new points
-##check if new point is expected in range
-##make x_arr and y_arr global and add to them new points
+##check if new point is expected in range or confused wuth other traces of the serie
+##make x_arr and y_arr global and add to them new points- maybe not (but on new points, add to aaray, probably loop n extend)
 #only ssh when new series or law update
 
 #def ssh_connection(): # should get as parameters the rules
