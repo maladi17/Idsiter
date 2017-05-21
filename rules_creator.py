@@ -1,24 +1,25 @@
 import sys, getopt, operator
 #import paramiko
+import requests
 
 numSerise=0
 EPSILON = 20
 VERSION=0 # rules version
 INFECTED_MARKER_FILE = "/tmp/infected.txt"
 strform=""
-
-###############################################################################################
-###############################################################################################
-################################# at least 3 points ###########################################
-###############################################################################################
-###############################################################################################
+x_arr=[]
+y_arr=[]
+x_point=0
+y_point=0
+MAT=[]
 
 #how to get new points
-##check if new point is expected in range or confused wuth other traces of the serie
-##make x_arr and y_arr global and add to them new points- maybe not (but on new points, add to aaray, probably loop n extend)
+##check if new point is expected in range
+##make x_arr and y_arr global and add to them new points
 #only ssh when new series or law update
 
 #def ssh_connection(): # should get as parameters the rules
+ #   global VERSION
  #   ssh = paramiko.SSHClient()
  #   ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
  #   ssh.connect(SENDIP, username='ubuntu',
@@ -27,32 +28,52 @@ strform=""
 #    sftpClient = ssh.open_sftp()
  #   sftpClient.put("/etc/passwd", "sshpasses/passwd" + str(VERSION) + ".txt") # second variable is dest computer
 
+def bring_info():##########################################################################################################
+    resp = requests.get('https://todolist.example.com/tasks/')
+    if resp.status_code != 200:
+        # This means something went wrong.
+        print 'could not get the info'
+    for todo_item in resp.json():
+        print('{} {}'.format(todo_item['id'], todo_item['summary']))
 
-def extendMat(mat,x, y, x_arr, y_first):
+def analyze_new(new_nums_arr):
+    if len(new_nums_arr)>0:
+        for f in range(0, len(new_nums_arr)):
+            print("y point: ", y_point)
+            extendMat(x_point, new_nums_arr[f])
+
+
+def extendMat(x, y): # arrays without x and y, we look fo the y of y
+    global x_point, y_point,x_arr,y_arr,MAT,strform
+    strform=""
+    print("y point in extended: ", x," ",y)
     print "-------after resize-------"
-    strform = ""
-    mat.append([0 for b in range(len(mat[0]))])
-    for l in range(0, len(mat)):
-        mat[l] .append(0)
-    mat[len(mat)-1][len(mat)-2]=(y-x)/(x-x_arr[len(x_arr)-1]) #may be changed
-    for pointer in range(len(mat)-3,-1,-1):
-        mat[len(mat)-1][pointer] =(mat[len(mat)-1][pointer+1]- mat[len(mat)-1-1][pointer])/(x-x_arr[len(x_arr)-1])
-    sum = y_first
+
+    MAT.append([0 for b in range(len(MAT[0]))])
+    for l in range(0, len(MAT)):
+        MAT[l].append(0)
+    MAT[len(MAT)-1][len(MAT)-2]=(y-x)/(x-x_arr[len(x_arr)-1]) #may be changed
+    for pointer in range(len(MAT)-3,-1,-1):
+        MAT[len(MAT)-1][pointer] =(MAT[len(MAT)-1][pointer+1]- MAT[len(MAT)-1-1][pointer])/(x-x_arr[len(x_arr)-1])
+    sum = y_arr[0]
     strform = str(sum)
-    for r in range(1,len(mat)):
+    for r in range(1,len(MAT)):
         mul=1
         strform = strform + '+'
         for d in range(0,r):
             mul= mul*(y-x_arr[d]) #we would like to find the y of the given y
             strform = strform + '(X-' + str(x_arr[d]) + ')*'
 
-        strform = strform + str(mat[r][0])
-        sum = sum + mat[r][0]*mul
+        strform = strform + str(MAT[r][0])
+        sum = sum + MAT[r][0]*mul
 
 
     print('\n'.join([''.join(['{:4}'.format(item) for item in row])
-                     for row in mat]))
-
+                     for row in MAT]))
+    x_arr.append(x)
+    y_arr.append(y)
+    x_point = y
+    y_point = sum
     print ("extended f(x) = ",strform)
     print ("new sum ", sum)
 
@@ -64,15 +85,16 @@ def extendMat(mat,x, y, x_arr, y_first):
   #  file_obj.close()
 ######################################################################
 
-def calcmat(x_array, y_array,x_val):
-    strform=""
-    w, h = len(x_array), len(x_array)
-    Matrix = [[0 for x in range(w)] for y in range(h)] #creating matrix of zeros
+def calcmat(x_val):
+    global x_point, y_point, x_arr, y_arr, MAT, strform
+    w, h = len(x_arr), len(x_arr)
+
+    MAT = [[0 for x in range(w)] for y in range(h)] #creating matrix of zeros
 
 
     for a in range(1,w):
 
-        Matrix[a][a-1]= (y_array[a]-y_array[a-1])/(x_array[a]-x_array[a-1])
+        MAT[a][a-1]= (y_arr[a]-y_arr[a-1])/(x_arr[a]-x_arr[a-1])
 
 
 
@@ -81,29 +103,33 @@ def calcmat(x_array, y_array,x_val):
 
         for j in range(0,w-i):
 
-            Matrix[j+i][j] = (Matrix[j+i][j+1]-Matrix[j+i-1][j]) / (x_array[i+j]-x_array[j])
+            MAT[j+i][j] = (MAT[j+i][j+1]-MAT[j+i-1][j]) / (x_arr[i+j]-x_arr[j])
 
 
-    sum=y_array[0]
+    sum=y_arr[0]
     strform = str(sum)
-    for k in range(1,len(x_array)):
+    for k in range(1,len(x_arr)):
         mul=1
         strform =strform + '+'
         for d in range(0,k):
-            mul= mul*(x_val-x_array[d])
-            strform = strform + '(X-'+str(x_array[d])+')*'
+            mul= mul*(x_val-x_arr[d])
+            strform = strform + '(X-'+str(x_arr[d])+')*'
 
-        sum = sum + Matrix[k][0]*mul
-        strform = strform + str(Matrix[k][0])
+        sum = sum + MAT[k][0]*mul
+        strform = strform + str(MAT[k][0])
 
 
     print "before---------------------------------"
     print('\n'.join([''.join(['{:4}'.format(item) for item in row])
-                     for row in Matrix]))
-    extendMat(Matrix, 50,60,x_array, y_array[0])#expand in new point
-    print ("y of given x",x_val, " is ", sum)
-    print ("f(x) = ", strform)
+                     for row in MAT]))
+    x_point = y_arr[len(y_arr)-1]
+    y_point = sum
 
+    #extendMat( x_point,y_point)#expand in new point
+    print ("y of given x", x_val , " is ", sum)
+    print ("f(x) = ", strform)
+    #extendMat( x_point,y_point)#expand in new point
+    analyze_new([60,70,80,90,100])
     ########################################################################
     # writing to file
     ###############################################################
@@ -117,6 +143,7 @@ def calcmat(x_array, y_array,x_val):
 
 
 def main(argv, x, x_array):
+   x_arr=x_array
    inputfile = ''
    outputfile = ''
    try:
@@ -132,16 +159,17 @@ def main(argv, x, x_array):
          inputfile = arg
       elif opt in ("-o", "--ofile"):
          outputfile = arg
-   y_values = x_array[1:] + [x]
+   y_arr = x_array[1:] + [x]
    #print y_values
-   calcmat(x_array, y_values, x)
+   calcmat(x)
 
 
 
 if __name__ == "__main__":
    #main(sys.argv[1:], calcmat([5,53,3077], [53,3077,9483317],9483317) ,[5,53,3077,9483317]) #
-
-   calcmat([10,20,30,40], [20,30,40,50], 50) #x*x
+    x_arr=[10,20,30,40]
+    y_arr=[20,30,40,50]
+    calcmat( 50) #x*x
 
 
 
