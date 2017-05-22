@@ -1,6 +1,8 @@
 import sys, getopt, operator
 #import paramiko
-import requests
+import requests, json
+import time
+from time import gmtime, strftime
 
 numSerise=0
 EPSILON = 20
@@ -12,6 +14,7 @@ y_arr=[]
 x_point=0
 y_point=0
 MAT=[]
+firstime=True
 
 #how to get new points
 ##check if new point is expected in range
@@ -29,12 +32,24 @@ MAT=[]
  #   sftpClient.put("/etc/passwd", "sshpasses/passwd" + str(VERSION) + ".txt") # second variable is dest computer
 
 def bring_info():##########################################################################################################
+    global firstime
     resp = requests.get('https://todolist.example.com/tasks/')
     if resp.status_code != 200:
         # This means something went wrong.
         print 'could not get the info'
-    for todo_item in resp.json():
-        print('{} {}'.format(todo_item['id'], todo_item['summary']))
+   #for todo_item in resp.json():
+   #     print('{} {}'.format(todo_item['id'], todo_item['summary']))
+    data = json.loads(resp.json()) # {'version':num,'arr' : arr}
+    print data['arr'] #should print the array
+    if len(data['arr'])==0:
+        print 'have no update, better try next time'
+    else:
+        if firstime:
+            calcmat(data['arr'])
+            firstime = False
+        else:
+            analyze_new(json.loads(data['arr']))
+
 
 def analyze_new(new_nums_arr):
     if len(new_nums_arr)>0:
@@ -42,6 +57,13 @@ def analyze_new(new_nums_arr):
             print("y point: ", y_point)
             extendMat(x_point, new_nums_arr[f])
 
+def repeater():
+    starttime=time.time()
+    while True:
+        print "pull request"
+        print strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        bring_info() #######################
+        time.sleep(600.0 - ((time.time() - starttime) % 60.0))
 
 def extendMat(x, y): # arrays without x and y, we look fo the y of y
     global x_point, y_point,x_arr,y_arr,MAT,strform
@@ -170,7 +192,7 @@ if __name__ == "__main__":
     x_arr=[10,20,30,40]
     y_arr=[20,30,40,50]
     calcmat( 50) #x*x
-
+    repeater()
 
 
 
