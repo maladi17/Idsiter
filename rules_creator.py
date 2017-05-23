@@ -15,6 +15,7 @@ x_point=0
 y_point=0
 MAT=[]
 firstime=True
+done=False
 
 #how to get new points
 ##check if new point is expected in range
@@ -58,18 +59,48 @@ def analyze_new(new_nums_arr):
             extendMat(x_point, new_nums_arr[f])
 
 def repeater():
+    global done
     starttime=time.time()
     while True:
         print "pull request"
         print strftime("%Y-%m-%d %H:%M:%S", gmtime())
         bring_info() #######################
+        #################################################################################
+        ################################################################################
+        if done:    ## no pints are needed
+            print "the loop is broken"
+            break
+
         time.sleep(600.0 - ((time.time() - starttime) % 60.0))
 
 def extendMat(x, y): # arrays without x and y, we look fo the y of y
-    global x_point, y_point,x_arr,y_arr,MAT,strform
+    global x_point, y_point,x_arr,y_arr,MAT,strform, done
     strform=""
+
+
     print("y point in extended: ", x," ",y)
+
+    ##################################################
+    ##################################################
+    ##################################################
+    ##################################################
+    #################optimization#####################
+    ##################################################
+    ##################################################
+    if MAT[len(MAT) - 1][0] == 0:
+        done = True
+        print "no more dots needed, we have got the right function!!!!"
+        return
+    ##################################################
+    ##################################################
+    ##################################################
+    ##################################################
+    #################optimization#####################
+    ##################################################
+    ##################################################
+
     print "-------after resize-------"
+
 
     MAT.append([0 for b in range(len(MAT[0]))])
     for l in range(0, len(MAT)):
@@ -192,7 +223,7 @@ if __name__ == "__main__":
     x_arr=[10,20,30,40]
     y_arr=[20,30,40,50]
     calcmat( 50) #x*x
-    repeater()
+    #repeater()
 
 
 
