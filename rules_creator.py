@@ -1,3 +1,4 @@
+
 import sys, getopt, operator
 #import paramiko
 import requests, json
@@ -32,8 +33,11 @@ done=False
 #    sftpClient = ssh.open_sftp()
  #   sftpClient.put("/etc/passwd", "sshpasses/passwd" + str(VERSION) + ".txt") # second variable is dest computer
 
+def roundByCoefficient(n, interval): #circle numbers by coefficient
+    return ((round( n / interval) + 1) * ( interval) )
+
 def bring_info():##########################################################################################################
-    global firstime
+    global firstime, x_arr, y_arr
     resp = requests.get('https://todolist.example.com/tasks/')
     if resp.status_code != 200:
         # This means something went wrong.
@@ -42,14 +46,20 @@ def bring_info():###############################################################
    #     print('{} {}'.format(todo_item['id'], todo_item['summary']))
     data = json.loads(resp.json()) # {'version':num,'arr' : arr}
     print data['arr'] #should print the array
+    #############################
+    array = data['arr']
+    for itr in range(0,len(array)):
+        array[itr] = roundByCoefficient(array[itr], 10)
+    #############################
     if len(data['arr'])==0:
         print 'have no update, better try next time'
-    else:
+    else: #create x_array, y_array
         if firstime:
-            calcmat(data['arr'])
+            calcmat(array)
             firstime = False
         else:
-            analyze_new(json.loads(data['arr']))
+            #analyze_new(json.loads(data['arr']))
+            analyze_new(array)
 
 
 def analyze_new(new_nums_arr):
