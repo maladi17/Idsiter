@@ -43,11 +43,11 @@ def formulaCalc(x_val):
     x_point = x_val
 
     y_point = ans
-   
+
     return ans
 
 def bring_info():##########################################################################################################
-    global firstime
+    global firstime, x_arr, y_arr
     resp = requests.get('https://todolist.example.com/tasks/')
     if resp.status_code != 200:
         # This means something went wrong.
@@ -56,21 +56,26 @@ def bring_info():###############################################################
    #     print('{} {}'.format(todo_item['id'], todo_item['summary']))
     data = json.loads(resp.json()) # {'version':num,'arr' : arr}
     print data['arr'] #should print the array
+    #############################
+    array = data['arr']
+    for itr in range(0,len(array)):
+        array[itr] = roundByCoefficient(array[itr], 10)
+    #############################
     if len(data['arr'])==0:
         print 'have no update, better try next time'
-    else:
+    else: #create x_array, y_array here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if firstime:
-            otherCalc(data['arr'])
+            otherCalc(array)
             firstime = False
         else:
-            analyze_new(json.loads(data['arr']))
-
+            #analyze_new(json.loads(data['arr']))
+            analyze_new(array)
 
 def analyze_new(new_nums_arr):
     global x_point
     if len(new_nums_arr)>0:
         for f in range(0, len(new_nums_arr)):
-            extendArr(x_point, new_nums_arr[f])
+            extendArr(x_point, new_nums_arr[f]) ################################################# round!!!!!!!##########
 
 
 def extendArr(x_p, y_p):
@@ -108,16 +113,6 @@ def extendArr(x_p, y_p):
     y_point = formulaCalc(y_p)
     x_arr.append(x_p)
     y_arr.append(y_p)
-
-########################################################################
-    # writing to file
-    ###############################################################
-  #  file_obj = open(INFECTED_MARKER_FILE, "w")
-  #  file_obj.write(str(numSerise)+" "+ strform)
-  #  file_obj.close()
-######################################################################
-
-
 
 def repeater():
     global done
@@ -184,7 +179,8 @@ def otherCalc(y_last_point_known):
     ######################################################################
 
 
-
+def roundByCoefficient(n, interval): #circle numbers by coefficient
+    return ((round( n / interval) + 1) * ( interval) )
 
 
 def main(argv, x, x_array):
@@ -221,6 +217,8 @@ if __name__ == "__main__":
     #calcmat( 50) #x*x
     #repeater()
     #formulaCalc()
-
-
+    print roundByCoefficient(10.102, 10)
+    print roundByCoefficient(22.102, 10)
+    print roundByCoefficient(2.102, 10)
+    print roundByCoefficient(20, 10)
        #extend!!!
