@@ -1,8 +1,8 @@
-
 import sys, getopt, operator
 #import paramiko
 import requests, json
 import time
+from sympy import *
 from time import gmtime, strftime
 
 numSerise=0
@@ -97,10 +97,10 @@ def extendMat(x, y): # arrays without x and y, we look fo the y of y
     #################optimization#####################
     ##################################################
     ##################################################
-    if MAT[len(MAT) - 1][0] == 0:
-        done = True
-        print "no more dots needed, we have got the right function!!!!"
-        return
+    #if MAT[len(MAT) - 1][0] == 0:
+    #   done = True
+    #    print "no more dots needed, we have got the right function!!!!"
+    #    return
     ##################################################
     ##################################################
     ##################################################
@@ -137,7 +137,7 @@ def extendMat(x, y): # arrays without x and y, we look fo the y of y
     y_arr.append(y)
     x_point = y
     y_point = sum
-    print ("extended f(x) = ",strform)
+    print ("extended f(x) = ",simplfomula())
     print ("new sum ", sum)
 
 ########################################################################
@@ -190,9 +190,9 @@ def calcmat(x_val):
 
     #extendMat( x_point,y_point)#expand in new point
     print ("y of given x", x_val , " is ", sum)
-    print ("f(x) = ", strform)
+    print ("f(x) = ", simplfomula())
     #extendMat( x_point,y_point)#expand in new point
-    analyze_new([60,70,80,90,100])
+    analyze_new([228947163,52416803445000000])
     ########################################################################
     # writing to file
     ###############################################################
@@ -203,6 +203,9 @@ def calcmat(x_val):
 
     return sum
 
+def simplfomula():
+
+    return simplify(strform)
 
 
 def main(argv, x, x_array):
@@ -230,11 +233,11 @@ def main(argv, x, x_array):
 
 if __name__ == "__main__":
    #main(sys.argv[1:], calcmat([5,53,3077], [53,3077,9483317],9483317) ,[5,53,3077,9483317]) #
-    x_arr=[10,20,30,40]
-    y_arr=[20,30,40,50]
-    calcmat( 50) #x*x
+    x_arr=[1,3,11,123]
+    y_arr=[3,11,123,15131]
+    calcmat( 15131) #x*x
     #repeater()
-
+    print simplfomula()
 
 
        #extend!!!
