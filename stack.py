@@ -17,11 +17,16 @@ class myStack:
     def printStack(self):
         print self.container
 
-s = myStack()
-s.push('1')
-s.push('2')
-s.printStack()
-print(s.pop())
-s.printStack()
-print(s.pop())
-s.printStack()
+def main():
+
+    s = myStack()
+    s.push('1')
+    s.push('2')
+    s.printStack()
+    print(s.pop())
+    s.printStack()
+    print(s.pop())
+    s.printStack()
+
+if __name__ == "__main__":
+    main()
