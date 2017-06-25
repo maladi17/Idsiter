@@ -22,9 +22,13 @@ class time_analyizer_module:
     done = False
 
 
-    def __init__(self, x_array, y_array):
-        self.x_arr = x_array
-        self.y_arr = y_array
+    def __init__(self, array):
+        self.__create2Arrays__(array)
+
+    def __create2Arrays__(self, arr):
+        num = len(arr)-1
+        self.x_arr =  arr[0: num]
+        self.y_arr = arr[1:]
 
     # how to get new points
     ##check if new point is expected in range
@@ -211,12 +215,17 @@ class time_analyizer_module:
         print self.strform
         return simplify(self.strform)
 
+
+
 def main():
 
+    arr = [1, 3, 11, 123,  15131]
 
-    x_arr = [1, 3, 11, 123]
-    y_arr = [3, 11, 123, 15131]
-    analyzer = time_analyizer_module(x_arr, y_arr)
+#######     we demand that arr creates:
+#######         x_arr = [1, 3, 11, 123]
+#######         y_arr = [3, 11, 123, 15131]
+
+    analyzer = time_analyizer_module(arr)
     analyzer.calcmat(15131)  # x*x
     # repeater()
     print analyzer.simplfomula()
