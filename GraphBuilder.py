@@ -1,8 +1,10 @@
 import collections
+import networkx as nx
+
 
 class GraphBuilder:
     __data = {}
-    __vertexes = 0
+    __vertexes = 0 ## num of vertexes
     __graph =[]
 
     def __init__(self,data, vertexes):
@@ -22,11 +24,13 @@ class GraphBuilder:
            price = keys[i]
            dest = values[i][1]
            tempL = [dest, price]
-           self.__graph[index].append((dest,price))
+           self.__graph[index].append([dest,price, 0 ]) # 0 is white
 
 
     def printGraph(self):
         print self.__graph
+
+
 
     def printData(self):
         print self.__data
@@ -44,9 +48,13 @@ class GraphBuilder:
        #         min = self.__graph[index][j][1]
         #        minEdge = self.__graph[index][j]
 
-            print(minEdge," ", min)
+            print("minimun edge is from ",index," is ", minEdge," and its price is  ", min)
+            return minEdge
 
     def removeEdge(self, StartVertex):
+############################################################################## if using it, have to remove from __edgesTo too
+        ## it removes the edge with most small price
+
         if len(self.__graph[StartVertex]) == 0:
             print "could not remove anything "
             return
@@ -70,35 +78,85 @@ class GraphBuilder:
             print "there are " + str(count) + " edges between "+ str(origin)+" to " +str(dest)
             return count
 
+    def makeGray(self, src, index): # src from where the edge, index is index of edge
+        try:
+            dest = self.__graph[src][index][1]
+            self.__graph[src][index][2] = 1
+        except IndexError:
+            print "out Of Index in make (change color to grey)"
+
+    def makeAllWhite(self):
+        for i in range(0, len(self.__graph)):
+            for j in range(0,len(self.__graph[i])):
+                self.__graph[i][j][2] = 0
+
+    def makeBlack(self, src, index):  # src from where the edge, index is index of edge
+        try:
+            dest = self.__graph[src][index][1]
+            self.__graph[src][index][2] = 2
+
+        except IndexError:
+            print "out Of Index in make (change color to black)"
+
+    def getdestFromEdge(self, edge):
+         return edge[0], edge[1]  ## return the dest of edge and its price
+
 #######################################################################################
 ###                                                                                 ###
 ###         error-does not works when there are packets on the same time            ###
 ###                                                                                 ###
 #######################################################################################
+    def canWeTurnBlack(self, numberV, price ): # can we  color edges to numberV with edge... (dst, price)
+        min  = price
+        for i in range(0, len(self.__graph)):
+            for j in range(0,len(self.__graph[i])):
+                if self.__graph[i][j][0] == numberV and self.__graph[i][j][2] != 2 and min > self.__graph[i][j][1]:
+                    print self.__graph[i][j][1]
+                    return False
 
+        return True
 
 def main():
     data = {10:[0,2], 12:[3,1], 14:[1,3], 15:[2,3],18:[0,2], 20:[2,1]}
+    #####[[(2, 10, 0), (2, 18, 0)], [(3, 14, 0)], [(3, 15, 0), (1, 20, 0)], [(1, 12, 0)]]
+
     gr = GraphBuilder(data,4)
     gr.printGraph()
     gr.IsMultiEdge(0,2)
     gr.getsmallestEdge(1)
     gr.getsmallestEdge(0)
-    gr.removeEdge(1)
+    #gr.removeEdge(1)
     gr.printGraph()
-    gr.removeEdge(1)
+    #gr.removeEdge(1)
     gr.printGraph()
     gr.getsmallestEdge(1)
     gr.printGraph()
-    gr.removeEdge(0)
+    #gr.removeEdge(0)
     gr.printGraph()
-    gr.removeEdge(0)
+    #gr.removeEdge(0)
     gr.printGraph()
     print ("how much edges from 0",gr.HowMuchEdges(0))
     print ("how much edges from 2", gr.HowMuchEdges(2))
     gr.IsMultiEdge(0, 2)
     gr.IsMultiEdge(3, 1)
-
+    gr.printGraph()
+    dst, price = gr.getdestFromEdge(gr.getsmallestEdge(2))
+    print ("dest from edge ", dst, " where its price is ", price)
+    gr.makeBlack(3,0)
+    gr.makeGray(2,1)
+    gr.makeGray(0, 0)
+    gr.printGraph()
+    gr.makeBlack(2,1)
+    #gr.makeBlack(0,0)
+    gr.printGraph()
+    print gr.canWeTurnBlack(1,20)
+    print gr.canWeTurnBlack(2,18)
+    print gr.canWeTurnBlack(2, 10)
+    print gr.canWeTurnBlack(3,14)
+    #gr.makeBlack(0,0)
+    #print gr.canWeTurnBlack(2,18) true because edge (0-->2 is black now)
+    gr.makeAllWhite()
+    gr.printGraph()
 
 if __name__ == "__main__":
     main()
