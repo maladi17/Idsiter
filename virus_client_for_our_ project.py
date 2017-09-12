@@ -1,8 +1,9 @@
 import socket
 import os
-
+import time
 
 def Main():
+    time.sleep(4)
     # if not os.path.isfile("etc/init/mystartupscript.conf"):
     #	Fl = open("/etc/init/mystartupscript.conf", "w")
     #	Fl.write("start on runlevel [2345]\nstop on runlevel [!2345]\nexec ../../../home/user/Desktop/client.py")
