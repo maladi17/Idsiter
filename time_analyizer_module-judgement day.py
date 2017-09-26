@@ -2,6 +2,7 @@ import sys, getopt, operator
 #import paramiko
 import requests, json
 import time
+from pymongo import MongoClient
 from sympy import *
 from time import gmtime, strftime
 
@@ -24,7 +25,7 @@ class time_analyizer_module:
 
     def __init__(self, array):
         self.__create2Arrays__(array)
-
+        self.VERSION = 0
     def __create2Arrays__(self, arr):
         num = len(arr)-1
         self.x_arr =  arr[0: num]
@@ -50,28 +51,32 @@ class time_analyizer_module:
 
     def bring_info(self):  ##########################################################################################################
 
-        resp = requests.get('https://todolist.example.com/tasks/')
-        if resp.status_code != 200:
-            # This means something went wrong.
-            print 'could not get the info'
-            # for todo_item in resp.json():
-            #     print('{} {}'.format(todo_item['id'], todo_item['summary']))
-        data = json.loads(resp.json())  # {'version':num,'arr' : arr}
-        print data['arr']  # should print the array
+        self.VERSION = self.VERSION + 1
+        client = MongoClient('localhost', 27017)
+        db = client.ids
+        collection = db.logges
+        quesries = []
+        for collec in collection.find({"level": 3}):
+            quesries.append(collec)
+        i = 1
+        for value in quesries:
+            print i
+            print value
+            # print value['users']
+            print '\n'
+            i = i + 1
+        for itr in range(0, len(quesries)):
+            quesries[itr] = self.roundByCoefficient(quesries[itr], 10)
         #############################
-        array = data['arr']
-        for itr in range(0, len(array)):
-            array[itr] = self.roundByCoefficient(array[itr], 10)
-        #############################
-        if len(data['arr']) == 0:
+        if len(quesries) == 0:
             print 'have no update, better try next time'
         else:  # create x_array, y_array
             if self.firstime:
-                self.calcmat(array)
+                self.calcmat(quesries)
                 self.firstime = False
             else:
                 # analyze_new(json.loads(data['arr']))
-                self.analyze_new(array)
+                self.analyze_new(quesries)
 
     def analyze_new(self, new_nums_arr):
 
@@ -104,7 +109,7 @@ class time_analyizer_module:
 
         self.strform = ""
 
-        print("y point in extended: ", x, " ", y)
+        #print("y point in extended: ", x, " ", y)
 
         ##################################################
         ##################################################
@@ -125,7 +130,7 @@ class time_analyizer_module:
         ##################################################
         ##################################################
 
-        print "-------after resize-------"
+        #print "-------after resize-------"
 
         self.MAT.append([0 for b in range(len(self.MAT[0]))])
         for l in range(0, len(self.MAT)):
@@ -146,14 +151,14 @@ class time_analyizer_module:
             self.strform = self.strform + str(self.MAT[r][0])
             sum = sum + self.MAT[r][0] * mul
 
-        print('\n'.join([''.join(['{:4}'.format(item) for item in row])
-                         for row in self.MAT]))
+        #print('\n'.join([''.join(['{:4}'.format(item) for item in row])
+        #                 for row in self.MAT]))
         self.x_arr.append(x)
         self.y_arr.append(y)
         self.x_point = y
         self.y_point = sum
         print ("extended f(x) = ", self.simplfomula())
-        print ("new sum ", sum)
+        #print ("new sum ", sum)
 
         ########################################################################
         # writing to file
@@ -190,17 +195,17 @@ class time_analyizer_module:
             sum = sum + self.MAT[k][0] * mul
             self.strform = self.strform + str(self.MAT[k][0])
 
-        print "before---------------------------------"
-        print('\n'.join([''.join(['{:4}'.format(item) for item in row])
-                         for row in self.MAT]))
+        #print "before---------------------------------"
+        #print('\n'.join([''.join(['{:4}'.format(item) for item in row])
+        #                for row in self.MAT]))
         self.x_point = self.y_arr[len(self.y_arr) - 1]
         self.y_point = sum
 
         # extendMat( x_point,y_point)#expand in new point
-        print ("y of given x", x_val, " is ", sum)
-        print ("f(x) = ", self.simplfomula())
+        #print ("y of given x", x_val, " is ", sum)
+        #print ("f(x) = ", self.simplfomula())
         # extendMat( x_point,y_point)#expand in new point
-        self.analyze_new([228947163, 52416803445000000])
+        #self.analyze_new([228947163, 52416803445000000])
         ########################################################################
         # writing to file
         ###############################################################
@@ -216,10 +221,8 @@ class time_analyizer_module:
         return simplify(self.strform)
 
 
-
 def main():
-
-    arr = [1, 3, 11, 123,  15131]
+    arr = [1,3,11,123,15131]
 
 #######     we demand that arr creates:
 #######         x_arr = [1, 3, 11, 123]
@@ -231,4 +234,9 @@ def main():
     print analyzer.simplfomula()
 
 if __name__ == "__main__":
+
+
+    start_time = time.time()
     main()
+    print("--- %s seconds ---" % (time.time() - start_time))
+
