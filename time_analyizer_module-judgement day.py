@@ -1,14 +1,15 @@
-import sys, getopt, operator
-#import paramiko
-import requests, json
+import matplotlib.pyplot as plt
 import time
-from pymongo import MongoClient
+import pymongo
 from sympy import *
 from time import gmtime, strftime
-
+import sys
+from datetime import datetime, timedelta
 
 class time_analyizer_module:
 
+    date = 0
+    nextP = 0
     numSerise = 0
     EPSILON = 20
     VERSION = 0  # rules version
@@ -21,62 +22,93 @@ class time_analyizer_module:
     MAT = []
     firstime = True
     done = False
+    rule = 0
+
+    def roundByCoefficient(self, n, interval):  # circle numbers by coefficient
+        return ((round(n / interval) + 1) * (interval))
+
+    def turnToSec(self, val):
+        hours, minutes, seconds = val.split(":")
+        return int(hours) * 3600 + int(minutes) * 60 + int(seconds)
+
+    def fixTime(self, firstH, firstD, currentH, currentD ):
+        firstH = self.turnToSec(firstH)
+        currentH = self.turnToSec(currentH)
+
+        a = datetime.strptime(firstD, "%d.%m.%y")
+        b = datetime.strptime(currentD, "%d.%m.%y")
+        if a < b:
+            distance = (b-a).days
+            currentH = currentH + (distance*24*60*60)
+        return currentH - firstH
+
+    def bring_info(self):  ##########################################################################################################
+
+        self.VERSION = self.VERSION + 1
+        #try:
+        client = pymongo.MongoClient('localhost', 27017)
+        db = client.ids
+        collection = db.logges
+        quesries = []
+        start = False
+        min = 0
+        for collec in collection.find({"level": 3}).sort([("date", pymongo.ASCENDING), ("hour", pymongo.ASCENDING)]) :
+
+            if start == False:
+                firstH = collec['hour']
+                firstD = collec['date']
+                self.rule = collec['rule']
+                day, month, year = firstD.split('.')
+                hour, minutes, second = firstH.split(':')
+                self.date = datetime.strptime('18-05-04 10:12:20', "%y-%m-%d %H:%M:%S")
+                self.date = self.date.replace(minute=int(minutes), hour=int(hour), second=int(second), year=int(year), month=int(month), day=int(day))
+                print "attack started in " +  str(self.date)
+                start = True
+
+            interval = self.fixTime(firstH, firstD, collec['hour'], collec['date'])
+            if min > interval:
+                min = interval
 
 
-    def __init__(self, array):
+            quesries.append(interval)
+
+        quesries.sort()
+
+        quesries = [x + (- min) + 1 for x in quesries]
+
+        #except :
+         #   print "mongo error, could not connect to the db."
+          #  print "Suggestion- have u connected to the db?? \n"
+
+
+        for itr in range(0, len(quesries)):
+            #quesries[itr] = int(self.roundByCoefficient(quesries[itr], 10))
+            quesries[itr] = int(quesries[itr])
+
+        #############################
+
+
+        if len(quesries) == 0:
+            print 'have no update, better try next time'
+
+        return quesries
+
+    def __init__(self):
+        array = self.bring_info()
+        #print [item for item, count in collections.Counter(array).items() if count > 1]
+        #array = array[0:5]
         self.__create2Arrays__(array)
-        self.VERSION = 0
+
+        self.VERSION = 1
+
+
+        self.sum = self.calcmat(self.y_arr[-1])
+
     def __create2Arrays__(self, arr):
         num = len(arr)-1
         self.x_arr =  arr[0: num]
         self.y_arr = arr[1:]
 
-    # how to get new points
-    ##check if new point is expected in range
-    ##make x_arr and y_arr global and add to them new points
-    # only ssh when new series or law update
-
-    # def ssh_connection(self): # should get as parameters the rules
-    #   global VERSION
-    #   ssh = paramiko.SSHClient()
-    #   ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    #   ssh.connect(SENDIP, username='ubuntu',
-    #               password='123456')  # in my opinion it is pretty idiotic to put here mine username and password
-    # SENDIP is the other component ip (should be global var)
-    #    sftpClient = ssh.open_sftp()
-    #   sftpClient.put("/etc/passwd", "sshpasses/passwd" + str(VERSION) + ".txt") # second variable is dest computer
-
-    def roundByCoefficient(self, n, interval):  # circle numbers by coefficient
-        return ((round(n / interval) + 1) * (interval))
-
-    def bring_info(self):  ##########################################################################################################
-
-        self.VERSION = self.VERSION + 1
-        client = MongoClient('localhost', 27017)
-        db = client.ids
-        collection = db.logges
-        quesries = []
-        for collec in collection.find({"level": 3}):
-            quesries.append(collec)
-        i = 1
-        for value in quesries:
-            print i
-            print value
-            # print value['users']
-            print '\n'
-            i = i + 1
-        for itr in range(0, len(quesries)):
-            quesries[itr] = self.roundByCoefficient(quesries[itr], 10)
-        #############################
-        if len(quesries) == 0:
-            print 'have no update, better try next time'
-        else:  # create x_array, y_array
-            if self.firstime:
-                self.calcmat(quesries)
-                self.firstime = False
-            else:
-                # analyze_new(json.loads(data['arr']))
-                self.analyze_new(quesries)
 
     def analyze_new(self, new_nums_arr):
 
@@ -171,17 +203,25 @@ class time_analyizer_module:
 
     def calcmat(self, x_val):
     ###for example  x_val', 15131, ' x_array:  ', [1, 3, 11, 123], ' y_arr: ', [3, 11, 123, 15131]
+
         w, h = len(self.x_arr), len(self.x_arr)
 
         self.MAT = [[0 for x in range(w)] for y in range(h)]  # creating matrix of zeros
 
         for a in range(1, w):
-            self.MAT[a][a - 1] = (self.y_arr[a] - self.y_arr[a - 1]) / (self.x_arr[a] - self.x_arr[a - 1])
+            try:
+                self.MAT[a][a - 1] = float(self.y_arr[a] - self.y_arr[a - 1]) / float(self.x_arr[a] - self.x_arr[a - 1])
+            except:
+                self.MAT[a][a - 1] = self.y_arr[a] - self.y_arr[a - 1] / self.x_arr[a] - self.x_arr[a - 1]
+
 
         for i in range(2, w):  # without 8
 
             for j in range(0, w - i):
-                self.MAT[j + i][j] = (self.MAT[j + i][j + 1] - self.MAT[j + i - 1][j]) / (self.x_arr[i + j] - self.x_arr[j])
+                try:
+                    self.MAT[j + i][j] = float(self.MAT[j + i][j + 1] - self.MAT[j + i - 1][j]) / float(self.x_arr[i + j] - self.x_arr[j])
+                except:
+                    self.MAT[j + i][j] = self.MAT[j + i][j + 1] - self.MAT[j + i - 1][j] / self.x_arr[i + j] - self.x_arr[j]
 
         sum = self.y_arr[0]
         self.strform = str(sum)
@@ -191,9 +231,13 @@ class time_analyizer_module:
             for d in range(0, k):
                 mul = mul * (x_val - self.x_arr[d])
                 self.strform = self.strform + '(X-' + str(self.x_arr[d]) + ')*'
+            try:
+                sum = sum + self.MAT[k][0] * mul
+                self.strform = self.strform + str(self.MAT[k][0])
+            except:
+                sum = sum + int(self.MAT[k][0]) * mul
+                self.strform = self.strform + str(int(self.MAT[k][0]))
 
-            sum = sum + self.MAT[k][0] * mul
-            self.strform = self.strform + str(self.MAT[k][0])
 
         #print "before---------------------------------"
         #print('\n'.join([''.join(['{:4}'.format(item) for item in row])
@@ -217,26 +261,108 @@ class time_analyizer_module:
         return sum
 
     def simplfomula(self):
-        print self.strform
+
         return simplify(self.strform)
 
+    def evaluateForm(self, orderedFormula,xVal):
 
-def main():
-    arr = [1,3,11,123,15131]
+        f = orderedFormula.replace('X', str(xVal))
+        return f
+
+
+    def writeToFile(self, name):
+        f = open(name+".txt", "a")  # opens file with name of "test.txt"
+        f.write(" ---------------------------------------------------------------------------------------\n")
+        f.write("version from " + str(strftime("%Y-%m-%d %H:%M:%S", gmtime())) +'\n\n')
+        f.write(" ---------------------------------------------------------------------------------------\n")
+
+        f.write(" -----------------------------------parts in the file:----------------------------------------------------\n\n\n\n")
+        f.write("\n 1.data acquired\n")
+        f.write("\n 2.formula built \n")
+        f.write("\n 3.more ordered formula\n")
+        f.write("\n 4.future estimated attacks\n")
+        f.write("\n\n\n\n -----------------------------------data acquired ----------------------------------------------------\n\n\n\n")
+        f.write("intervals (s): " + str(self.x_arr)+'\n\n')
+        f.write("started in: " + str(self.date)+'\n')
+        f.write("raised rule "+str(self.rule))
+        f.write("\n\n\n\n -----------------------------------got formula:----------------------------------------------------\n\n\n\n")
+        f.write(self.strform)
+        f.write("\n\n\n -----------------------------------formula in other words----------------------------------------------------\n\n\n\n")
+        ordered = str(self.simplfomula())
+        f.write(ordered)
+        print "calculated a function "
+        f.write("\n --------------------------------------\n\n")
+        print ordered
+        f.write("\n\n\n -----------------------------------future estimated attacks----------------------------------------------------\n\n\n\n")
+        print("\n possible attacks: \n\n ")
+        try:
+
+            day = int(int(float(self.sum)) / (60 * 60 * 24))
+            if day > 1:
+                f.write(str("too far for an attack: "))
+            f.write(str( self.date + timedelta(seconds=int(self.sum))))
+            f.write(" , \n")
+            print str(self.date + timedelta(seconds=int(self.sum)))
+
+
+            num = str(self.evaluateForm(self.simplfomula(), self.sum))
+            day = int(int(float(num)) / (60 * 60 * 24))
+            if day > 1:
+                f.write(str("too far for an attack: "))
+
+
+
+            f.write( str(self.date + timedelta(seconds=int(float(num)))) + " , \n")
+            print str(self.date + timedelta(seconds=int(float(num))))
+            num = str(self.evaluateForm(self.simplfomula(), num))
+            day = int(int(float(num)) / (60 * 60 * 24))
+            if day > 1:
+                f.write(str("too far for an attack: "))
+
+
+            f.write(str(self.date + timedelta(seconds=int(float(num)))) + '\n')
+            print str(self.date + timedelta(seconds=int(float(num))))
+
+        except:
+            f.write("next time is too far then visible. possibly it is not an attack or there wont be any more attack with this function. ")
+        f.write('========================================================================================================================\n\n\n\n\n')
+        f.close()
+
+    def graph(self):
+        plt.plot(self.y_arr, marker='o')
+        plt.ylabel('values of intervals')
+        plt.title('events acceleration')
+        plt.show()
+
+def main(argv):
+
+    arguments = argv
+    count = len(arguments)
+    if (count != 1 and count != 2) or arguments[0] != '-t':
+        print " needed   time_analyizer_module.py -t   name of file  (optional) for time inspection"
+        sys.exit(2)
+
+
 
 #######     we demand that arr creates:
 #######         x_arr = [1, 3, 11, 123]
 #######         y_arr = [3, 11, 123, 15131]
 
-    analyzer = time_analyizer_module(arr)
-    analyzer.calcmat(15131)  # x*x
+    if count == 1:
+        name = "default"
+    else:
+        name = arguments[1]
+
+    analyzer = time_analyizer_module()
+      # x*x
     # repeater()
-    print analyzer.simplfomula()
+
+    analyzer.writeToFile(name)
+    analyzer.graph()
+
 
 if __name__ == "__main__":
 
-
     start_time = time.time()
-    main()
-    print("--- %s seconds ---" % (time.time() - start_time))
-
+    main(sys.argv[1:])
+    print("---got answer in %s seconds ---" % (time.time() - start_time))
