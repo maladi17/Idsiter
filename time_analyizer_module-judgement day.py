@@ -23,6 +23,7 @@ class time_analyizer_module:
     firstime = True
     done = False
     rule = 0
+    timesArr = []
 
     def roundByCoefficient(self, n, interval):  # circle numbers by coefficient
         return ((round(n / interval) + 1) * (interval))
@@ -53,7 +54,7 @@ class time_analyizer_module:
         start = False
         min = 0
         for collec in collection.find({"level": 3}).sort([("date", pymongo.ASCENDING), ("hour", pymongo.ASCENDING)]) :
-
+            self.timesArr.append(str(collec["hour"]))
             if start == False:
                 firstH = collec['hour']
                 firstD = collec['date']
@@ -96,6 +97,7 @@ class time_analyizer_module:
     def __init__(self):
         array = self.bring_info()
         #print [item for item, count in collections.Counter(array).items() if count > 1]
+        #array = [2,4,6,8,10]
         #array = array[0:5]
         self.__create2Arrays__(array)
 
@@ -282,7 +284,7 @@ class time_analyizer_module:
         f.write("\n 3.more ordered formula\n")
         f.write("\n 4.future estimated attacks\n")
         f.write("\n\n\n\n -----------------------------------data acquired ----------------------------------------------------\n\n\n\n")
-        f.write("intervals (s): " + str(self.x_arr)+'\n\n')
+        f.write("intervals (H:M:S): " + str(self.timesArr)+'\n\n')
         f.write("started in: " + str(self.date)+'\n')
         f.write("raised rule "+str(self.rule))
         f.write("\n\n\n\n -----------------------------------got formula:----------------------------------------------------\n\n\n\n")
@@ -293,8 +295,8 @@ class time_analyizer_module:
         print "calculated a function "
         f.write("\n --------------------------------------\n\n")
         print ordered
-        f.write("\n\n\n -----------------------------------future estimated attacks----------------------------------------------------\n\n\n\n")
-        print("\n possible attacks: \n\n ")
+        f.write("\n\n\n -----------------------------------future estimated attacks (samples)----------------------------------------------------\n\n\n\n")
+        print("\n possible attacks (you are recomended to block according to  the given function)): \n\n ")
         try:
 
             day = int(int(float(self.sum)) / (60 * 60 * 24))
@@ -302,7 +304,7 @@ class time_analyizer_module:
                 f.write(str("too far for an attack: "))
             f.write(str( self.date + timedelta(seconds=int(self.sum))))
             f.write(" , \n")
-            print str(self.date + timedelta(seconds=int(self.sum)))
+            #print str(self.date + timedelta(seconds=int(self.sum)))
 
 
             num = str(self.evaluateForm(self.simplfomula(), self.sum))
@@ -313,7 +315,7 @@ class time_analyizer_module:
 
 
             f.write( str(self.date + timedelta(seconds=int(float(num)))) + " , \n")
-            print str(self.date + timedelta(seconds=int(float(num))))
+            #print str(self.date + timedelta(seconds=int(float(num))))
             num = str(self.evaluateForm(self.simplfomula(), num))
             day = int(int(float(num)) / (60 * 60 * 24))
             if day > 1:
@@ -321,11 +323,11 @@ class time_analyizer_module:
 
 
             f.write(str(self.date + timedelta(seconds=int(float(num)))) + '\n')
-            print str(self.date + timedelta(seconds=int(float(num))))
+            #print str(self.date + timedelta(seconds=int(float(num))))
 
         except:
             f.write("next time is too far then visible. possibly it is not an attack or there wont be any more attack with this function. ")
-        f.write('========================================================================================================================\n\n\n\n\n')
+        f.write('========================================================================================================================\n\n\n')
         f.close()
 
     def graph(self):
@@ -333,6 +335,25 @@ class time_analyizer_module:
         plt.ylabel('values of intervals')
         plt.title('events acceleration')
         plt.show()
+
+    def repetitions(self, num, name):
+        try:
+            f = open(name + ".txt", "a")
+            f.write("----------------------------you chose " + num + " future suggestions -----------------------------------------\n\n" )
+            form = self.simplfomula()
+            number = self.sum
+            print str(self.date + timedelta(seconds=int(float(self.sum))))
+            f.write('0 ' + str(self.date + timedelta(seconds=int(float(self.sum)))) + '\n')
+            for i in range(1, int(num)):
+                number = self.evaluateForm(self.simplfomula(), number)
+
+                print str(i) + ' ' + str(self.date + timedelta(seconds=int(float(number))))
+                f.write(str(i) + ' '+ str(self.date + timedelta(seconds=int(float(number)))) + '\n')
+            f.close()
+        except:
+            print "could not find any close dates"
+            f.write("could not complete the action")
+            f.close()
 
 def main(argv):
 
@@ -359,7 +380,9 @@ def main(argv):
 
     analyzer.writeToFile(name)
     analyzer.graph()
-
+    print "Enter how many future times do u want:",
+    numRep = raw_input()
+    analyzer.repetitions(numRep, name)
 
 if __name__ == "__main__":
 
