@@ -423,4 +423,4 @@ if __name__ == "__main__":
 
     start_time = time.time()
     main(sys.argv[1:])
-    print("---got answer in %s seconds ---" % (time.time() - start_time))
+    #print("---got answer in %s seconds ---" % (time.time() - start_time))
