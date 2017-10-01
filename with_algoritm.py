@@ -82,6 +82,7 @@ class time_analyizer_module:
                 j = i[0]
 
         j = int(float(j))
+        #print j
         numRule = int(float(numRule[-1]))
 
 
@@ -106,7 +107,9 @@ class time_analyizer_module:
             quesries.append(interval)
 
         quesries.sort()
-
+        quesries = list (set (quesries))
+        quesries.remove(28817)
+        #print max(quesries)
         quesries = [x + (- min) + 1 for x in quesries]
 
         #except :
@@ -130,14 +133,9 @@ class time_analyizer_module:
 
     def __init__(self):
         array = self.bring_info()
-        #print [item for item, count in collections.Counter(array).items() if count > 1]
-        #array = [2,4,6,8,10]
-        #array = array[0:5]
+        #array = array[0:100]
         self.__create2Arrays__(array)
-
         self.VERSION = 1
-
-
         self.sum = self.calcmat(self.y_arr[-1])
 
     def __create2Arrays__(self, arr):
@@ -155,17 +153,13 @@ class time_analyizer_module:
 
     def repeater(self):
 
-        ##
-        ## tells to do an action every x time
-        ##
 
         starttime = time.time()
         while True:
             print "pull request"
             print strftime("%Y-%m-%d %H:%M:%S", gmtime())
-            self.bring_info()  #######################
-            #################################################################################
-            ################################################################################
+            self.bring_info()
+
             if self.done:  ## no pints are needed
                 print "the loop is broken"
                 break
@@ -235,7 +229,6 @@ class time_analyizer_module:
         #  file_obj.write(str(numSerise)+" "+ strform)
         #  file_obj.close()
 
-    ######################################################################
 
     def calcmat(self, x_val):
     ###for example  x_val', 15131, ' x_array:  ', [1, 3, 11, 123], ' y_arr: ', [3, 11, 123, 15131]
@@ -423,4 +416,4 @@ if __name__ == "__main__":
 
     start_time = time.time()
     main(sys.argv[1:])
-    #print("---got answer in %s seconds ---" % (time.time() - start_time))
+   # print("---got answer in %s seconds ---" % (time.time() - start_time))
